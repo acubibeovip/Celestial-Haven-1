@@ -1,20 +1,19 @@
 // tests/unit/domain-purity.test.ts — proves src/domain + src/shared stay pure (plan §6).
 //
-// Two independent checks, because the pinned pair (ESLint 10.14.0 +
-// typescript-eslint 8.46.0) cannot lint TypeScript files — see
-// docs/adr/ADR-001-stack.md (BLOCKED) and eslint.config.mjs:
+// Two independent checks. (History: with typescript-eslint 8.46.0 the
+// pinned pair could not lint TS files, so check A was the only ESLint
+// proof; since the user-approved bump to 8.70.0 on 2026-11-26,
+// eslint.config.mjs lints **/*.ts for real too — see ADR-001, RESOLVED.
+// Check B stays as a second line of defence.)
 //
 //  A. ESLint RULES proof: the purity rules (no-restricted-imports +
-//     no-restricted-globals, same rule text as the intended eslint.config.mjs
-//     block) are run through ESLint's Linter API on the committed violation
+//     no-restricted-globals, same rule text as eslint.config.mjs)
+//     are run through ESLint's Linter API on the committed violation
 //     fixture. This proves the RULES catch violations.
 //  B. REAL SOURCES proof: a TypeScript-compiler AST check walks every real
 //     file under src/domain + src/shared (excluding the fixture) and asserts
 //     no forbidden import and no forbidden global is referenced. This proves
-//     the real code is pure, without needing the broken TS parser.
-//
-// When the typescript-eslint pin decision lands, (B) stays as a second line
-// of defence and (A) moves to the real eslint.config.mjs block.
+//     the real code is pure, without needing the ESLint parser.
 
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";

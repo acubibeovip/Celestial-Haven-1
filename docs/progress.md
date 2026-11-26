@@ -6,7 +6,9 @@ DONE / PARTIAL / BLOCKED with reason. Checkboxes in `docs/master-plan.md` are
 ticked only when a task's acceptance criteria pass with recorded evidence.
 Never tick by intent.
 
-- Repo: `~/workspace/celestial-haven/` (local git only; no remote, no push).
+- Repo: `~/workspace/celestial-haven/` (local git, branch main; remote origin
+  https://github.com/acubibeovip/Celestial-Haven-1.git — push BLOCKED, no
+  GitHub auth in this environment; see M0-04a push note).
 - Toolchain: Node v24.22.1, npm 10.9.4.
 - Prior commit: `df6ec6b` — "M0-00: Add Master Development Plan v2.0 unmodified as
   source of truth" (`docs/master-plan.md` is an exact copy of
@@ -259,3 +261,33 @@ Never tick by intent.
   - `npm run lint` → exit 0.
   - `npm run build` → `✓ built in 1.02s`, exit 0.
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
+
+## M0-04c-fix — Bump typescript-eslint 8.46.0 -> 8.70.0, enable real TS linting
+
+- Status: DONE (user-approved 2026-11-26: option "Doi sang typescript-eslint 8.70.0 de lint duoc TypeScript")
+- Commits (small, per feature):
+  - `33423f6` — "M0-04c-fix: Bump typescript-eslint to 8.70.0" — package.json (8.46.0 -> 8.70.0, exact, no ^/~), package-lock.json, .npmrc (removed legacy-peer-deps=true; strict peer resolution restored — see below).
+  - `6791769` — "M0-04c-fix: Enable TypeScript linting in ESLint config" — eslint.config.mjs (removed **/*.ts ignore; TS block with tseslint.parser + @typescript-eslint/no-unused-vars + @typescript-eslint/no-explicit-any + purity rules for src/domain + src/shared), src/domain/__fixtures__/violation.ts (header comment only, now records the --no-ignore proof).
+  - Docs commit (this entry) — docs/adr/ADR-001-stack.md (pin table + peer-conflict RESOLVED + subpackage dates), docs/progress.md (this section + repo header), tests/unit/domain-purity.test.ts (header comment only, now records that eslint.config.mjs lints TS for real and check B stays as second line of defence).
+- Evidence / verification (2026-11-26, re-verified, not trusted blindly):
+  - `npm view typescript-eslint@8.70.0 time --json` -> 8.70.0: 2026-09-07T18:18:09.654Z (80 days before 2026-11-26, cutoff 2026-11-12, PASS). 8.46.0 was 2025-10-06T17:06:02.237Z.
+  - Subpackages, all 8.70.0 published 2026-09-07: @typescript-eslint/parser 18:18:47Z, @typescript-eslint/eslint-plugin 18:17:13Z, @typescript-eslint/utils 18:16:54Z, @typescript-eslint/types 18:16:10Z, @typescript-eslint/scope-manager 18:17:08Z, @typescript-eslint/type-utils 18:17:52Z. Only the meta package `typescript-eslint` is a direct dependency; the rest are its dependencies (lockfile: 51 occurrences of 8.70.0).
+  - `npm view typescript-eslint@8.70.0 peerDependencies` -> eslint "^8.57.0 || ^9.0.0 || ^10.0.0", typescript ">=4.8.4 <6.1.0" — pinned eslint 10.14.0 and typescript 5.9.3 both satisfy it.
+  - All other pins unchanged: phaser 4.2.1, typescript 5.9.3, vite 8.3.7, zod 4.6.7, vitest 5.1.0, playwright / @playwright/test 1.55.0, eslint 10.14.0, @types/node 24.10.1. No ^/~ in package.json.
+- Commands run (2026-11-26):
+  - `npm install` (after pin bump + .npmrc change) -> "removed 21 packages, and changed 11 packages in 5s", exit 0. Strict peer resolution works without legacy-peer-deps.
+  - `npm ci` -> exit 0 (re-verified after restoring package.json to compact one-line form; the earlier pretty-print reformat was reverted so the package.json diff is the single version token).
+  - `npm run typecheck` -> exit 0 (after both commits).
+  - `npm run lint` -> exit 0 — now lints **/*.ts for real, not JS only.
+  - Lint proof (deliberate violations, files deleted / not committed):
+    - Temp `src/shared/probe-lint.ts` with `export const probeUnused: any = 1;` -> `1:27 error Unexpected any. Specify a different type @typescript-eslint/no-explicit-any`, exit 1. File removed afterwards; git status clean of it.
+    - `npx eslint src/domain/__fixtures__/violation.ts --no-ignore` -> 7 errors, exit 1: phaser + zod no-restricted-imports, window/document/localStorage/fetch/navigator no-restricted-globals. Proves the real config + TS parser enforces purity.
+  - `npm test` -> vitest 5.1.0: `Test Files 2 passed (2)`, `Tests 9 passed (9)`, Duration 1.30s, exit 0.
+  - `npm run build` (with prebuild validate:content) -> `✓ built in 996ms`, exit 0 (chunk-size warning only, pre-existing).
+- Push: attempted once at the end (see below); expected BLOCKED, recorded there.
+- Master-plan checkbox M0-04: NOT ticked — M0-04 as a whole still has the known test:e2e BLOCKED (no Chromium binary, recorded in M0-04d) and this fix does not by itself close it.
+
+## M0-04c-fix — Push attempt (2026-11-26)
+
+- Command: `git push origin main` (once only, as instructed).
+- Result: (recorded below after running it; expected failure: no GitHub auth in this environment — `gh auth status` "not logged into any GitHub hosts", git push asks for Username, SSH reset by proxy. No credentials supplied or invented.)

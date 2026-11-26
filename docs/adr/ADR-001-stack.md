@@ -32,24 +32,24 @@ Rejected by the 14-day rule (NOT used, recorded so nobody "upgrades" into them):
 | @playwright/test | 1.55.0 | 2025-08-20T10:27:47.203Z | 463 | PASS | Plan section 9 e2e tests (T09/T10 full chapter runs, T17 viewport/touch emulation, T18 subpath/iframe). |
 | playwright | 1.55.0 | 2025-08-20T10:27:37.504Z | 463 | PASS | Browser binaries / CLI companion to @playwright/test 1.55.0 (same version, same publish day). |
 | eslint | 10.14.0 | 2026-10-30T14:12:27.179Z | 27 | PASS | Flat config. Enforces the domain-purity architecture rule (plan section 6) with `no-restricted-imports` + `no-restricted-globals`. |
-| typescript-eslint | 8.46.0 | 2025-10-06T17:06:02.237Z | 416 | PASS | Type-aware linting for the strict TypeScript config. Peer range requires TypeScript `>=4.8.4 <6.0.0`; 5.9.3 satisfies it. |
+| typescript-eslint | 8.70.0 | 2026-09-07T18:18:09.654Z | 80 | PASS | Type-aware linting for the strict TypeScript config. Peer range requires eslint `^8.57.0 \|\| ^9.0.0 \|\| ^10.0.0` (so pinned ESLint 10.14.0 satisfies it) and TypeScript `>=4.8.4 <6.1.0`; 5.9.3 satisfies it. Bumped from 8.46.0 on 2026-11-26 by user decision — see "RESOLVED" note below. Its subpackages (parser, eslint-plugin, utils, types, scope-manager, type-utils, typescript-estree) are all 8.70.0, published the same day 2026-09-07 (e.g. parser 18:18:47Z, eslint-plugin 18:17:13Z, utils 18:16:54Z). |
 
-### Known peer-range conflict (recorded, not hidden)
+### Peer-range conflict — RESOLVED 2026-11-26 (was: typescript-eslint 8.46.0 vs ESLint 10)
 
-`typescript-eslint@8.46.0` declares peer `eslint: ^8.57.0 || ^9.0.0`, while
-the pinned ESLint is `10.14.0`. Both versions are mandated by this ADR and
-both pass the 14-day rule, so neither is changed. Resolution: a committed
-`.npmrc` with `legacy-peer-deps=true` (peer-range enforcement relaxed only;
-all direct versions stay exactly pinned in `package.json` +
-`package-lock.json`). Runtime verification that `npm run lint` actually works
-with this combination is recorded in `docs/progress.md` (M0-04). If a future
-lint run breaks on the ESLint 10 API, the fix is to re-decide this ADR pair —
-not to silently bump a version.
+`typescript-eslint@8.46.0` declared peer `eslint: ^8.57.0 || ^9.0.0`, while
+the pinned ESLint is `10.14.0`. That was resolved by bumping
+typescript-eslint to `8.70.0` (user-approved 2026-11-26, see below), whose
+peer range is `^8.57.0 || ^9.0.0 || ^10.0.0`. The committed `.npmrc` no
+longer sets `legacy-peer-deps=true` — peer resolution is strict (default)
+again, and `npm install` / `npm ci` both pass with it removed (verified
+2026-11-26: `npm install` exit 0, "removed 21 packages, and changed 11
+packages"). All direct versions stay exactly pinned in `package.json` +
+`package-lock.json`.
 
-### BLOCKED (2026-11-26): typescript-eslint 8.46.0 is runtime-incompatible with ESLint 10.14.0
+### RESOLVED (2026-11-26): typescript-eslint 8.46.0 was runtime-incompatible with ESLint 10.14.0 — fixed by user-approved bump to 8.70.0
 
-The peer-range conflict above is not just a warning — it is a real runtime
-incompatibility, verified 2026-11-26 (see `docs/progress.md`, M0-04):
+The 8.46.0 incompatibility, verified 2026-11-26 (see `docs/progress.md`,
+M0-04):
 
 1. Importing the `typescript-eslint` package under ESLint 10.14.0 crashes:
    `TypeError: Class extends value undefined is not a constructor or null`
@@ -63,25 +63,32 @@ incompatibility, verified 2026-11-26 (see `docs/progress.md`, M0-04):
 3. ESLint 10.14.0 ships no native TypeScript language (only `js`), and it
    does not bundle `@eslint/js` (a separate package, not in the pinned stack).
 
-Consequence: TypeScript files cannot be linted with the mandated pins.
-`npm run lint` therefore lints JS/MJS files only (green); `**/*.ts` is
-ignored in `eslint.config.mjs` with the reason recorded there. Purity of
-`src/domain` + `src/shared` is still enforced — by
-`tests/unit/domain-purity.test.ts`, which (a) runs the purity rules through
-ESLint's `Linter` API on the committed violation fixture, and (b) checks the
-real sources with a TypeScript-compiler AST check. That is the interim
-enforcement until the pin decision lands; it is not presented as ESLint
-linting the TS sources.
+Decision (user-approved 2026-11-26, option "Đổi sang typescript-eslint
+8.70.0 để lint được TypeScript"): bump typescript-eslint to `8.70.0`,
+published `2026-09-07T18:18:09.654Z` (80 days before 2026-11-26, passes
+the 14-day rule), peer `eslint: ^8.57.0 || ^9.0.0 || ^10.0.0`. Re-verified
+2026-11-26 with `npm view typescript-eslint@8.70.0 time --json` and per
+subpackage (`@typescript-eslint/parser/eslint-plugin/utils/types/
+scope-manager/type-utils` all 8.70.0, published 2026-09-07). It is the
+newest typescript-eslint version that both supports ESLint 10 (support
+first appears in 8.60.0, 2026-05-25; 8.55.0 and earlier do not declare
+`^10.0.0`) and passes the 14-day rule — 8.74.0 (2026-11-23) fails the
+rule. The rejected alternative (downgrade ESLint to 9.x) was not used.
 
-Verified fix candidate (NOT applied — needs owner / parent-agent decision
-because it changes a mandated pin): `typescript-eslint@8.70.0`, published
-`2026-09-07T18:18:09.654Z` (80 days before 2026-11-26, passes the 14-day
-rule), peer `eslint: ^8.57.0 || ^9.0.0 || ^10.0.0`. It is the newest
-typescript-eslint version that both supports ESLint 10 (support first appears
-in 8.60.0, 2026-05-25; 8.55.0 and earlier do not declare `^10.0.0`) and
-passes the 14-day rule — 8.74.0 (2026-11-23) fails the rule. Alternative fix:
-downgrade ESLint to 9.x (also a pin change). Either way, record the decision
-here before changing `package.json`.
+Applied in commits `33423f6` ("M0-04c-fix: Bump typescript-eslint to
+8.70.0", package.json + package-lock.json + .npmrc) and `6791769`
+("M0-04c-fix: Enable TypeScript linting in ESLint config",
+eslint.config.mjs + violation-fixture header). Consequence now:
+`npm run lint` lints `**/*.ts` for real (parser +
+`@typescript-eslint/no-unused-vars` + `@typescript-eslint/no-explicit-any`
++ purity rules for src/domain + src/shared) and passes, exit 0. Proof
+recorded in `docs/progress.md` (M0-04c-fix): a probe TS file with `: any`
+was flagged (`@typescript-eslint/no-explicit-any`, exit 1), and the
+committed violation fixture flags 7 errors via the real config
+(`npx eslint src/domain/__fixtures__/violation.ts --no-ignore`).
+Purity of `src/domain` + `src/shared` is now enforced by BOTH the ESLint
+config and `tests/unit/domain-purity.test.ts` (Linter-API proof + TS AST
+check on real sources).
 
 Transitive-only additions (not direct dependencies, resolved by npm from the
 pinned direct set; recorded here because they appear in the lockfile). Note:
