@@ -182,3 +182,25 @@ Never tick by intent.
 - Commands run (2026-11-26):
   - `npm run typecheck` → exit 0.
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
+
+## M0-05b — Zod content schemas
+
+- Status: DONE
+- Evidence: `src/content/schema/` — `common.ts` (placeholder literal,
+  `idSchema(kind)`, `anyIdSchema`, label/color helpers), `element.ts`,
+  `hero.ts` (template close/ranged/support), `item.ts` (gear/material/
+  consumable/key, stackMax 1..99), `recipe.ts`, `quest.ts` (prereqs,
+  objectives, reward, next, peacefulAlternative), `creature.ts`,
+  `npc.ts`, `resource.ts` (daily respawn), `crop.ts`, `map.ts`,
+  `encounter.ts` (adventure/peaceful ruleset), `manifest.ts`,
+  `index.ts` (`CONTENT_FILE_SCHEMAS` registry for all 11 kinds).
+  All schemas are `z.strictObject` with `"placeholder": true` required;
+  no schema lives in src/domain. Names/quest IDs follow plan §3.2/§3.5/§3.7.
+- Commands run (2026-11-26):
+  - `npm run typecheck` → exit 0.
+  - Note: importing the schemas under Node type-stripping requires `.ts`
+    extensions in relative imports — verified by probe (`node` importing
+    `src/shared/ids.ts` failed with `./result.js`, passed with `./result.ts`);
+    `src/shared/ids.ts` was fixed to `./result.ts` and amended into M0-05a
+    (`5512c97`, unpushed at the time).
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
