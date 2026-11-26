@@ -80,3 +80,26 @@ Never tick by intent.
   `git push origin main` from this repo pushes all local commits.
   Commits continue locally in small steps per the commit rules; nothing is
   lost — all work is in local git.
+
+## M0-04b — TS + Vite config + placeholder boot entry
+
+- Status: DONE (with one expected gap: full `npm run build` needs M0-05c)
+- Evidence: `tsconfig.json` (strict, noUncheckedIndexedAccess,
+  exactOptionalPropertyTypes, skipLibCheck, erasableSyntaxOnly,
+  allowImportingTsExtensions, path aliases @domain/@shared/@content/@app/
+  @game/@ui/@infra), `vite.config.ts` (base './', build.assetsDir 'bundle',
+  sourcemap false), `index.html`, `src/main.ts` (placeholder Boot scene:
+  code-generated shapes/text only), `src/domain/index.ts` (empty pure module
+  + purity doc comment).
+- Commands run (2026-11-26):
+  - `npm run typecheck` → `tsc --noEmit`, exit 0.
+  - `npx vite build` → `✓ built in 964ms`, exit 0; output `dist/index.html`
+    (0.46 kB) + `dist/bundle/index-D-m5usLn.js` (1,368.23 kB, gzip 357.63 kB).
+    Warning only: chunk > 500 kB after minification (Phaser bundle, expected
+    at scaffold; code-splitting is M6 work, not M0).
+  - `npm run build` → FAILS at prebuild as expected: `Error: Cannot find
+    module '.../tools/validate-content.ts'`. Full `npm run build` (prebuild
+    validate:content + vite build) is unblocked by M0-05c, which creates the
+    validator. Not a code defect — the validator simply does not exist yet.
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a (no GitHub
+  credentials in environment; see M0-04a entry). Commit kept local.
