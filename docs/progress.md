@@ -16,7 +16,7 @@ Never tick by intent.
 
 ## M0-01 — Scope decisions + ADR-001
 
-- Commit: (see git log after commit)
+- Commit: `40becf9` — "M0-01: Record stack ADR with verified publish dates and scope decisions"
 - Status: DONE
 - Evidence: `docs/adr/ADR-001-stack.md` — every package with exact version,
   real npm-registry publish date, days before 2026-11-26, 14-day check
@@ -47,3 +47,22 @@ Never tick by intent.
 - Master-plan checkbox M0-01: NOT ticked yet — ticking is deferred until the
   M0 scaffold (M0-04/M0-05) lands and the recorded commands pass, per the
   "never tick by intent" rule; the ADR is the evidence for M0-01 itself.
+
+## M0-04a — Pin exact stack versions (package.json + lockfile + .npmrc)
+
+- Commit: (see git log after push)
+- Status: DONE
+- Evidence: `package.json` (all 10 direct deps pinned exactly, no `^`/`~`),
+  `package-lock.json` (committed), `.npmrc` (`legacy-peer-deps=true` — see
+  ADR-001 peer-range note), `.gitignore`.
+- Commands run (2026-11-26):
+  - `npm ci` → tail: `added 161 packages in 6s`, exit 0. Installed versions
+    verified from lockfile: phaser 4.2.1, zod 4.6.7, typescript 5.9.3,
+    vite 8.3.7, vitest 5.1.0, eslint 10.14.0, typescript-eslint 8.46.0,
+    playwright 1.55.0, @playwright/test 1.55.0, @types/node 24.10.1.
+  - Pin check `grep -E '"[^"]+": "[\^~]' package.json` → `OK: no ^ or ~ in package.json`.
+  - `preview` script fixed to `vite preview --port 4173 --strictPort --host 127.0.0.1`
+    (diagnosis: plain `vite preview` binds only `[::1]:4173`, so
+    `http://127.0.0.1:4173` — used by Playwright `baseURL`/`webServer` —
+    failed; `curl localhost:4173` → 200, `curl 127.0.0.1:4173` → 000 before fix).
+- Pushed to origin main immediately after this commit (see git log).
