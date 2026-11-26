@@ -169,3 +169,16 @@ Never tick by intent.
     Unblock: run `npx playwright install chromium` on a machine with CDN
     access, then `npm run test:e2e`.
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
+
+## M0-05a — Shared ID + Result helpers
+
+- Status: DONE
+- Evidence: `src/shared/ids.ts` (`ID_PATTERN ^[a-z][a-z0-9_]{1,47}$`,
+  `ID_KIND_PREFIXES` for all 11 kinds — elem_, hero_, item_, recipe_, q_,
+  creature_, npc_, res_, crop_, map_, enc_ — `isValidIdFormat`, `idKind`,
+  `validateId` returning `Result<string, IdError>`), `src/shared/result.ts`
+  (`Result<T,E>`, `ok`/`err`/`isOk`/`isErr`/`mapResult`/`andThenResult` —
+  the atomic-transaction contract shape from plan §7).
+- Commands run (2026-11-26):
+  - `npm run typecheck` → exit 0.
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
