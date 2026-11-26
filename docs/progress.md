@@ -66,3 +66,17 @@ Never tick by intent.
     `http://127.0.0.1:4173` — used by Playwright `baseURL`/`webServer` —
     failed; `curl localhost:4173` → 200, `curl 127.0.0.1:4173` → 000 before fix).
 - Pushed to origin main immediately after this commit (see git log).
+- PUSH BLOCKED (2026-11-26): `git push -u origin main` failed with
+  `fatal: could not read Username for 'https://github.com': No such device
+  or address`. Cause: no GitHub credentials in this environment — no
+  credential helper configured (`git config --get credential.helper` → empty),
+  `gh auth status` → "You are not logged into any GitHub hosts", and the SSH
+  route also fails (`git ls-remote git@github.com:...` → connection reset by
+  proxy 198.19.0.1:3128). HTTPS read of the repo works (`git ls-remote
+  https://...` → empty, repo is empty), so only push auth is missing.
+  No credentials were supplied with this task and none were invented.
+  Unblock: user/parent supplies GitHub auth (e.g. `gh auth login` on a
+  machine with a browser, or a credential helper with a token) — then
+  `git push origin main` from this repo pushes all local commits.
+  Commits continue locally in small steps per the commit rules; nothing is
+  lost — all work is in local git.
