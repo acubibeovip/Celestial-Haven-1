@@ -1,0 +1,1 @@
+[{"id":"enc_void_devourer","mapId":"map_crystal_hollow","name":"Void Devourer","peacefulRoute":false,"phases":3,"placeholder":true,"rewardItemId":"item_star_lantern","ruleset":"adventure"},{"id":"enc_shrine_marks","mapId":"map_crystal_hollow","name":"Shrine Marks","peacefulRoute":true,"phases":1,"placeholder":true,"rewardItemId":"item_star_lantern","ruleset":"peaceful"}]

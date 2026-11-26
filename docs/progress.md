@@ -204,3 +204,33 @@ Never tick by intent.
     `src/shared/ids.ts` was fixed to `./result.ts` and amended into M0-05a
     (`5512c97`, unpushed at the time).
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
+
+## M0-05c — Content validator + placeholder content set
+
+- Status: DONE
+- Evidence: `src/content/validate.ts` (schema → registry → refs → quest
+  cycles → manifest counts → prefix sanity), `tools/validate-content.ts`
+  (CLI, exit 1 on any error, runs in `prebuild`), `tools/validate-assets.mjs`,
+  `src/content/*.json` (11 files, 48 definitions) + `manifest.json`
+  (contentVersion 0.1.0-m0, counts match), `docs/PLACEHOLDERS.md`,
+  `docs/ASSET_LICENSES.md` (only what exists: code-generated placeholders).
+- Commands run (2026-11-26):
+  - `npm run typecheck` → exit 0 (after fixing one error found by tsc:
+    `tools/validate-content.ts(48,19): error TS18046: 'sum' is of type
+    'unknown'` — fixed with explicit `(sum: number, value: unknown)` types).
+  - `npm run validate:content` → `validate:content: OK (48 definitions
+    across 11 files)`, exit 0.
+  - `npm run validate:assets` → `validate:assets: OK (no shipped asset
+    files; ...)`, exit 0.
+  - `npm run build` (full, with prebuild) → `✓ built in 1.25s`, exit 0.
+    This unblocks the M0-04b gap: full `npm run build` now works.
+  - Negative probe (via `node` importing `src/content/validate.ts`):
+    clean set → 0 errors; duplicate id →
+    `[items.json] duplicate id "item_starter_sword" (also in items.json as
+    items)`; missing ref →
+    `[heroes.json] "hero_storm_monk" field "elementId" references missing id
+    "elem_nope"`; quest cycle →
+    `[quests.json] quest cycle detected: q_arrive -> q_gather -> q_craft ->
+    q_shrine -> q_arrive`; bad id `Bad_ID` → prefix error. (Formal fixture
+    tests for all four land in M0-05d.)
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
