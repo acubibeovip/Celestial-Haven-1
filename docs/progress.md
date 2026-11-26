@@ -140,3 +140,32 @@ Never tick by intent.
     TypeScript-compiler AST check on real src/domain + src/shared sources.
     The config file documents all of this in its header comment.
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
+
+## M0-04d — Vitest + Playwright config, e2e smoke, itch stub, README
+
+- Status: PARTIAL — configs + smoke test committed; `test:e2e` BLOCKED (no
+  Chromium binary in this environment, see below). Unit tests land in M0-05d.
+- Evidence: `vitest.config.ts` (include tests/unit + tests/integration,
+  node env, @domain/@shared/@content/@app/@game/@ui/@infra aliases via
+  import.meta.dirname), `playwright.config.ts` (baseURL 127.0.0.1:4173,
+  webServer `npm run preview`), `tests/e2e/smoke.spec.ts` (placeholder boot
+  page loads, canvas mounts), `tools/package-itch.mjs` (explicit stub),
+  `README.md`.
+- Commands run (2026-11-26):
+  - `npm test` → vitest 5.1.0: `No test files found, exiting with code 1`,
+    real exit 1. Expected — no unit tests exist until M0-05d.
+  - `npm run package:itch` → `package:itch is NOT IMPLEMENTED yet (M7-01).
+    No ZIP was created.`, real exit 1. By design; the stub must fail loudly
+    instead of producing a fake release artifact.
+  - `npm run test:e2e` → BLOCKED. The `--host 127.0.0.1` preview fix (M0-04a)
+    worked: the webServer now starts and the run reaches browser launch,
+    then fails with `Error: browserType.launch: Executable doesn't exist at
+    /home/hatch/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell`.
+    Cause: `npx playwright install chromium` fails twice in this environment
+    (`Failed to download Chromium 140.0.7339.16 (playwright build v1187),
+    Download failure, code=1`); no system Chromium exists
+    (`which chromium/google-chrome` → nothing; `~/.cache/ms-playwright/` →
+    empty). The smoke test file is committed but has never run green.
+    Unblock: run `npx playwright install chromium` on a machine with CDN
+    access, then `npm run test:e2e`.
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
