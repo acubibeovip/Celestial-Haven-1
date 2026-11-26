@@ -234,3 +234,28 @@ Never tick by intent.
     q_shrine -> q_arrive`; bad id `Bad_ID` → prefix error. (Formal fixture
     tests for all four land in M0-05d.)
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
+
+## M0-05d — Violation fixture + Vitest purity and validator tests
+
+- Status: DONE
+- Evidence: `src/domain/__fixtures__/violation.ts` (intentional phaser/zod
+  imports + window/document/localStorage/fetch/navigator use, written without
+  TS-only syntax so ESLint's core parser can read it; ignored by
+  eslint.config.mjs), `tests/unit/domain-purity.test.ts` (2 tests),
+  `tests/unit/content-validator.test.ts` (7 tests).
+- Commands run (2026-11-26):
+  - `npm test` → vitest 5.1.0: `Test Files 2 passed (2)`, `Tests 9 passed
+    (9)`, Duration 1.39s, exit 0. Purity test A proves the rules catch the
+    fixture (≥2 no-restricted-imports incl. phaser + zod; no-restricted-globals
+    for window/document/localStorage/fetch/navigator, all severity 2);
+    test B proves every real file under src/domain + src/shared is pure via
+    a TypeScript AST check. Validator tests: clean set passes; duplicate id,
+    bad prefix, schema violation (stackMax 1000), missing ref, quest cycle
+    and manifest count mismatch all fail with the expected error.
+  - `npm run typecheck` → exit 0 (after fixing one error found by tsc: the
+    `as const` PURITY_RULES was readonly and could not assign to the Linter
+    API's mutable rule-config type — fixed with an explicit
+    `Linter.Config["rules"]` annotation).
+  - `npm run lint` → exit 0.
+  - `npm run build` → `✓ built in 1.02s`, exit 0.
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
