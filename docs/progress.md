@@ -290,4 +290,4 @@ Never tick by intent.
 ## M0-04c-fix — Push attempt (2026-11-26)
 
 - Command: `git push origin main` (once only, as instructed).
-- Result: (recorded below after running it; expected failure: no GitHub auth in this environment — `gh auth status` "not logged into any GitHub hosts", git push asks for Username, SSH reset by proxy. No credentials supplied or invented.)
+- Result: FAILED, exit 128 — `fatal: could not read Username for 'https://github.com': No such device or address`. Same BLOCKED as M0-04a: no GitHub auth in this environment (`gh auth status` "not logged into any GitHub hosts", SSH reset by proxy). No credentials supplied or invented; not retried. All 14 local commits (df6ec6b .. c187bff) remain local only; nothing is on GitHub yet. Unblock: supply GitHub auth (e.g. `gh auth login`), then `git push origin main` from `~/workspace/celestial-haven/`.
