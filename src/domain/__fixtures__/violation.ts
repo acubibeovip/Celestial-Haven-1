@@ -7,10 +7,10 @@
 // lint` must stay green) and is never imported by game code.
 //
 // It is written WITHOUT TypeScript-only syntax on purpose: the Vitest test
-// runs the purity rules through ESLint's core Linter API (espree), and the
-// pinned @typescript-eslint/parser 8.46.0 cannot verify under ESLint 10.14.0
-// (see docs/adr/ADR-001-stack.md, BLOCKED). Once the typescript-eslint pin
-// decision lands, this fixture may use TS syntax again.
+// runs the purity rules through ESLint's core Linter API (espree). The
+// whole-repo `npm run lint` now also flags it (verified with
+// `npx eslint src/domain/__fixtures__/violation.ts --no-ignore`: 7 errors)
+// since typescript-eslint 8.70.0 enabled real TS linting (ADR-001).
 import Phaser from "phaser";
 import { z } from "zod";
 
