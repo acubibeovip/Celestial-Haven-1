@@ -34,13 +34,63 @@ Rejected by the 14-day rule (NOT used, recorded so nobody "upgrades" into them):
 | eslint | 10.14.0 | 2026-10-30T14:12:27.179Z | 27 | PASS | Flat config. Enforces the domain-purity architecture rule (plan section 6) with `no-restricted-imports` + `no-restricted-globals`. |
 | typescript-eslint | 8.46.0 | 2025-10-06T17:06:02.237Z | 416 | PASS | Type-aware linting for the strict TypeScript config. Peer range requires TypeScript `>=4.8.4 <6.0.0`; 5.9.3 satisfies it. |
 
+### Known peer-range conflict (recorded, not hidden)
+
+`typescript-eslint@8.46.0` declares peer `eslint: ^8.57.0 || ^9.0.0`, while
+the pinned ESLint is `10.14.0`. Both versions are mandated by this ADR and
+both pass the 14-day rule, so neither is changed. Resolution: a committed
+`.npmrc` with `legacy-peer-deps=true` (peer-range enforcement relaxed only;
+all direct versions stay exactly pinned in `package.json` +
+`package-lock.json`). Runtime verification that `npm run lint` actually works
+with this combination is recorded in `docs/progress.md` (M0-04). If a future
+lint run breaks on the ESLint 10 API, the fix is to re-decide this ADR pair —
+not to silently bump a version.
+
+### BLOCKED (2026-11-26): typescript-eslint 8.46.0 is runtime-incompatible with ESLint 10.14.0
+
+The peer-range conflict above is not just a warning — it is a real runtime
+incompatibility, verified 2026-11-26 (see `docs/progress.md`, M0-04):
+
+1. Importing the `typescript-eslint` package under ESLint 10.14.0 crashes:
+   `TypeError: Class extends value undefined is not a constructor or null`
+   at `@typescript-eslint/utils/dist/ts-eslint/eslint/FlatESLint.js` — its
+   utils do `class FlatESLint extends require("eslint/use-at-your-own-risk").FlatESLint`,
+   but ESLint 10.14.0's `use-at-your-own-risk` exports only
+   `builtinRules, shouldUseFlatConfig` (no `FlatESLint` class).
+2. `@typescript-eslint/parser@8.46.0` also crashes on verify under ESLint
+   10.14.0: `TypeError: scopeManager.addGlobals is not a function` — verified
+   with a minimal probe (`export const x: number = 1;` via the `Linter` API).
+3. ESLint 10.14.0 ships no native TypeScript language (only `js`), and it
+   does not bundle `@eslint/js` (a separate package, not in the pinned stack).
+
+Consequence: TypeScript files cannot be linted with the mandated pins.
+`npm run lint` therefore lints JS/MJS files only (green); `**/*.ts` is
+ignored in `eslint.config.mjs` with the reason recorded there. Purity of
+`src/domain` + `src/shared` is still enforced — by
+`tests/unit/domain-purity.test.ts`, which (a) runs the purity rules through
+ESLint's `Linter` API on the committed violation fixture, and (b) checks the
+real sources with a TypeScript-compiler AST check. That is the interim
+enforcement until the pin decision lands; it is not presented as ESLint
+linting the TS sources.
+
+Verified fix candidate (NOT applied — needs owner / parent-agent decision
+because it changes a mandated pin): `typescript-eslint@8.70.0`, published
+`2026-09-07T18:18:09.654Z` (80 days before 2026-11-26, passes the 14-day
+rule), peer `eslint: ^8.57.0 || ^9.0.0 || ^10.0.0`. It is the newest
+typescript-eslint version that both supports ESLint 10 (support first appears
+in 8.60.0, 2026-05-25; 8.55.0 and earlier do not declare `^10.0.0`) and
+passes the 14-day rule — 8.74.0 (2026-11-23) fails the rule. Alternative fix:
+downgrade ESLint to 9.x (also a pin change). Either way, record the decision
+here before changing `package.json`.
+
 Transitive-only additions (not direct dependencies, resolved by npm from the
-pinned direct set; recorded here because they appear in the lockfile):
+pinned direct set; recorded here because they appear in the lockfile). Note:
+`@types/node` is a direct devDependency (see table above), not transitive.
 
 | Package | Resolved version | Published | Note |
 |---|---|---|---|
-| @types/node | 24.10.1 | 2025-11-11T23:33:15.303Z | Pulled in as a transitive dependency (Vite/Vitest peer); used only for Node tooling types. |
-| jiti | 2.6.1 | 2025-10-01T07:34:07.746Z | Transitive (Vite). Not a direct dependency. |
+| @types/node | 24.10.1 | 2025-11-11T23:33:15.303Z | 15 days before 2026-11-26 — PASS. Direct devDependency (Node types for tools/tests). |
+| jiti | 2.6.1 | 2025-10-01T07:34:07.746Z | Transitive-only (Vite). Not a direct dependency. |
 
 Toolchain used to install/verify (not a project dependency): Node v24.22.1,
 npm 10.9.4.

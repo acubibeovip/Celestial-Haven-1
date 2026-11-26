@@ -103,3 +103,40 @@ Never tick by intent.
     validator. Not a code defect — the validator simply does not exist yet.
 - Push: attempted `git push origin main` → same BLOCKED as M0-04a (no GitHub
   credentials in environment; see M0-04a entry). Commit kept local.
+
+## M0-04c — ESLint config + domain-purity rules (TS lint BLOCKED)
+
+- Status: PARTIAL — JS lint works; TypeScript linting is BLOCKED (see below).
+  The block is a real incompatibility of the mandated pins, not a config bug.
+- Evidence: `eslint.config.mjs`, `docs/adr/ADR-001-stack.md` (BLOCKED section
+  added with evidence + fix candidate).
+- Commands run (2026-11-26):
+  - `npm run lint` → `eslint .`, exit 0. Scope today: ESLint 10.14.0 core
+    rules on JS/MJS files only; `**/*.ts` ignored (see BLOCKED note).
+  - BLOCKED evidence (verified, not assumed):
+    1. `import "typescript-eslint"` under ESLint 10.14.0 →
+       `TypeError: Class extends value undefined is not a constructor or null`
+       at `@typescript-eslint/utils/.../FlatESLint.js:12` (utils extend
+       `require("eslint/use-at-your-own-risk").FlatESLint`, which ESLint
+       10.14.0 does not export — `use-at-your-own-risk` keys are only
+       `builtinRules, shouldUseFlatConfig`).
+    2. Minimal probe with `@typescript-eslint/parser@8.46.0` via the
+       `Linter` API on `export const x: number = 1;` →
+       `TypeError: scopeManager.addGlobals is not a function`.
+    3. ESLint 10.14.0 ships no native TS language (only `js`) and does not
+       bundle `@eslint/js` (not a dependency of eslint 10.14.0).
+    4. Peer-range check: typescript-eslint declares eslint `^8.57.0 ||
+       ^9.0.0` through 8.55.0; `^10.0.0` first appears in 8.60.0
+       (2026-05-25).
+  - Verified fix candidate (NOT applied — changing a mandated pin needs
+    owner/parent decision): `typescript-eslint@8.70.0`, published
+    2026-09-07T18:18:09.654Z (80 days before 2026-11-26, passes 14-day rule),
+    peer eslint `^8.57.0 || ^9.0.0 || ^10.0.0`. Newest version that both
+    supports ESLint 10 and passes the rule (8.74.0, 2026-11-23, fails it).
+    Alternative: downgrade ESLint to 9.x (also a pin change).
+  - Interim enforcement (real, not faked): purity is enforced by
+    `tests/unit/domain-purity.test.ts` in M0-05d — ESLint `Linter` API on the
+    committed violation fixture (proves the rules catch violations) + a
+    TypeScript-compiler AST check on real src/domain + src/shared sources.
+    The config file documents all of this in its header comment.
+- Push: attempted `git push origin main` → same BLOCKED as M0-04a. Local only.
